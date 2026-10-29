@@ -27,8 +27,11 @@ class SerialSensorSource(SensorSource):
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
 
-    def stop(self) -> None:
+    def stop(self, wait: bool = False) -> None:
         self._stop_event.set()
+        if wait and self._thread is not None:
+            # Lets the port close before something else opens it.
+            self._thread.join(timeout=self._config.read_timeout_s + 1.0)
 
     def _run(self) -> None:
         cfg = self._config
@@ -36,7 +39,7 @@ class SerialSensorSource(SensorSource):
             with serial.Serial(
                 cfg.port, cfg.baud_rate, timeout=cfg.read_timeout_s
             ) as port:
-                time.sleep(cfg.startup_delay_s)
+                self._stop_event.wait(cfg.startup_delay_s)
                 port.reset_input_buffer()
 
                 self._connected = True

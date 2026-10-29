@@ -19,8 +19,12 @@ class SensorSource(ABC):
     def subscribe(self, listener: SampleListener) -> None:
         self._listeners.append(listener)
 
+    def unsubscribe(self, listener: SampleListener) -> None:
+        if listener in self._listeners:
+            self._listeners.remove(listener)
+
     def _publish(self, sample: Sample) -> None:
-        for listener in self._listeners:
+        for listener in list(self._listeners):
             listener(sample)
 
     @property
@@ -33,5 +37,5 @@ class SensorSource(ABC):
         ...
 
     @abstractmethod
-    def stop(self) -> None:
-        ...
+    def stop(self, wait: bool = False) -> None:
+        """Stop reading. With wait=True, return only once the device is released."""
