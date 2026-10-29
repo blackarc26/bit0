@@ -11,6 +11,7 @@ from .controls import KeyboardInput, PynputKeyboardInput, TkKeyboardInput
 from .cursor import CursorController
 from .cursor.pyautogui_driver import PyAutoGuiDriver
 from .motion import create_mapper
+from .profile import apply_gyro_profile, load_gyro_axes
 from .sensor import CsvSampleParser, SerialSensorSource
 from .strokes import StrokeRecorder
 from .ui import ControlPanel, TrailOverlay, Whiteboard
@@ -29,6 +30,9 @@ def _create_keyboard(backend: str, root: tk.Tk, bindings) -> KeyboardInput:
 
 
 def build_app(config: AppConfig) -> AirMouseApp:
+    calibrated = load_gyro_axes(config.gyro_profile_path) is not None
+    config = apply_gyro_profile(config)
+
     root = tk.Tk()
     panel = ControlPanel(root)
 
@@ -56,7 +60,7 @@ def build_app(config: AppConfig) -> AirMouseApp:
 
     return AirMouseApp(
         root=root,
-        mode_name=config.motion_mode,
+        mode_name=f"{config.motion_mode} ({'calibrated' if calibrated else 'DEFAULT AXES'})",
         update_ms=config.update_ms,
         max_dt_s=config.max_dt_s,
         source=source,
