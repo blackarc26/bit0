@@ -17,9 +17,11 @@ class SerialConfig:
 
 @dataclass(frozen=True)
 class GyroConfig:
-    # Indices into the line "ax,ay,az,gx,gy,gz".
-    h_index: int = 5               # gz (yaw)   -> cursor left/right
-    v_index: int = 4               # gy (pitch) -> cursor up/down
+    # How the three gyro axes (gx, gy, gz) combine into cursor motion.
+    # Measured per device by `python -m airmouse.tools.axis_probe`; these
+    # defaults assume a flat-mounted sensor (gz = yaw, gy = pitch).
+    h_weights: tuple = (0.0, 0.0, 1.0)   # -> cursor left/right
+    v_weights: tuple = (0.0, 1.0, 0.0)   # -> cursor up/down
     invert_h: bool = False
     invert_v: bool = False
     # 1.0 when firmware sends deg/s; 131.0 for raw MPU6050 counts (+-250 dps).
@@ -32,6 +34,9 @@ class GyroConfig:
     still_threshold_dps: float = 2.0
     bias_adapt: float = 0.005
     calibration_samples: int = 200
+    # Start-up calibration only accepts a window of samples that stayed
+    # within this many deg/s of their average (i.e. the device was still).
+    calibration_still_dps: float = 4.0
     max_sample_dt_s: float = 0.05
 
 
@@ -87,6 +92,7 @@ class AppConfig:
     # "auto" = Tk on macOS (pynput aborts there), pynput elsewhere.
     # "tk" only sees keys while the app's own windows have focus.
     keyboard_backend: str = "auto"
+    gyro_profile_path: str = "gyro_profile.json"   # relative to where you run
 
     serial: SerialConfig = field(default_factory=SerialConfig)
     gyro: GyroConfig = field(default_factory=GyroConfig)

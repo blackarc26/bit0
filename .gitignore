@@ -4,3 +4,6 @@ __pycache__/
 venv/
 env/
 .env
+
+# Per-device gyro calibration (written by the wizard)
+gyro_profile.json
